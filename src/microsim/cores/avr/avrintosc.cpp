@@ -5,8 +5,6 @@
 
 #include "avrintosc.h"
 #include "e_mcu.h" 
-//#include "mcudataspace.h"
-//#include "datautils.h"
 
 #include <QDebug>
 
@@ -35,9 +33,24 @@ AvrIntOsc::AvrIntOsc( eMcu* mcu, QString name )
 
 AvrIntOsc::~AvrIntOsc(){}
 
+void AvrIntOsc::stamp()
+{
+    adjustIntFreq();
+}
 
 // it's faster to calculate bit shift than using prescalers list from XML
 void AvrIntOsc::configureA(uint8_t newCLKPR)
+{
+    adjustIntFreq();
+
+    if (newCLKPR >= 0x80) return; // ignore CKSEL bit. TODO: CLKPR can be modified only within 4 clock after CKSEL sets, not really important
+    
+    m_prIndex = (newCLKPR & 0x0F);
+    m_mcu->setFreq(m_intOscFreq/(1 << m_prIndex), true);
+    m_psInst = m_mcu->psInst()/2; //update UI event tick
+}
+
+void AvrIntOsc::adjustIntFreq()
 {
     double freq = m_mcu->freq();
     
@@ -48,12 +61,4 @@ void AvrIntOsc::configureA(uint8_t newCLKPR)
         
         m_intOscFreq = freq*(1 << m_prIndex);        
     }
-
-    if (newCLKPR >= 0x80) return; // ignore CKSEL bit. TODO: CLKPR can be modified only within 4 clock after CKSEL sets, not really important
-    
-    m_prIndex = (newCLKPR & 0x0F);
-    m_mcu->setFreq(m_intOscFreq/(1 << m_prIndex), true);
-    m_psInst = m_mcu->psInst()/2; //update UI event tick
 }
-
-

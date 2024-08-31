@@ -14,7 +14,10 @@ class AvrIntOsc : public McuIntOsc
         AvrIntOsc(eMcu* mcu, QString name );
         virtual ~AvrIntOsc();
 
+        virtual void stamp() override;
         virtual void configureA(uint8_t newCLKPR) override;
+    private:
+        void adjustIntFreq(); // adjust internal frequency if differs from user choice (UI)
 };
 
 
